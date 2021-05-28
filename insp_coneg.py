@@ -1,6 +1,5 @@
 from typing import Optional
-from fastapi import FastAPI, File
-from fastapi.datastructures import UploadFile
+from fastapi import FastAPI, File, Body, Form, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 # from db_transactions import PsqlPy
@@ -40,14 +39,19 @@ def root():
 
 @app.post("/found")
 async def found_face_withorwithout(
-    request: Req_insp,
-    files: Optional[UploadFile] = File(...)
+    is_with_mask: bool = Form(...),
+    ts: int = Form(...),
+    location: str = Form(...),
+    file_uploaded: UploadFile = File(None)
 ):
-    # Receive request and parse as JSON -> dict
-    req_conv = request.dict()
-    print(req_conv)
-    
-    return {"received_api": req_conv}
+    # Receive request and save frame
+    if file_uploaded:
+        with open('test.jpg', 'wb') as buffer:
+            shutil.copyfileobj(file_uploaded.file, buffer)
+    return {
+        'mask':is_with_mask, 
+        'ts':ts,
+        'loc':location}
 
 # if __name__ == "__main__":
 #     uvicorn.run(app, port=6000, host='0.0.0.0')
