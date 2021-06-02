@@ -2,7 +2,9 @@ from typing import Optional
 from fastapi import FastAPI, File, Body, Form, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 # from db_transactions import PsqlPy
+from time import time
 import pandas as pd
+import os
 import shutil
 import uvicorn
 
@@ -39,8 +41,10 @@ async def found_face_withorwithout(
 ):
     # Receive request and save frame
     if file_uploaded:
-        with open(file_uploaded.filename, 'wb') as buffer:
+        file_name = f"{int(time())}.jpg"
+        with open(f"tmp/{file_name}", 'wb') as buffer:
             shutil.copyfileobj(file_uploaded.file, buffer)
+        # Spawns thread to analyze this image
 
     return {
         'ts':ts,

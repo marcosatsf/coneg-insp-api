@@ -12,6 +12,8 @@ python_version = "3.8"
 fastapi-login = "*"
 psycopg2-binary = "*"
 pandas = "*"
+dlib = "*"
+face-recognition = "*"
 
 [packages.fastapi]
 extras = [ "all",]
