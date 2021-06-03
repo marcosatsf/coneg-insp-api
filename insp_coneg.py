@@ -1,7 +1,8 @@
 from typing import Optional
 from fastapi import FastAPI, File, Body, Form, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-# from db_transactions import PsqlPy
+import request_manager as req_m
+from datetime import datetime
 from time import time
 import pandas as pd
 import os
@@ -39,15 +40,36 @@ async def found_face_withorwithout(
     location: str = Form(...),
     file_uploaded: UploadFile = File(None)
 ):
+    """
+    Information request from inspector, containing some useful
+    metrics data. 
+
+    Args:
+        ts (int): Timestamp from the moment of inspector's 
+        request.
+        location (str): Location from which inspector is sending 
+        request.
+        file_uploaded (UploadFile): Frame captured using mask or 
+        not.
+
+    Returns:
+        (dict): Response with timestamp, location and is frame
+        was sent by the inspector side.
+    """
+    # Transform to timestamp acceptable to Postgres
+    dt = str(datetime.fromtimestamp(ts))
     # Receive request and save frame
     if file_uploaded:
-        file_name = f"{int(time())}.jpg"
-        with open(f"tmp/{file_name}", 'wb') as buffer:
+        file_name = f"./tmp/{int(time())}.jpg"
+        with open(file_name, 'wb') as buffer:
             shutil.copyfileobj(file_uploaded.file, buffer)
         # Spawns thread to analyze this image
+        req_m.multiprocess_recognition(location, dt, file_name)
+    else:
+        req_m.ins_clean_request(location, dt)
 
     return {
-        'ts':ts,
+        'ts':dt,
         'loc':location,
         'file_sent': bool(file_uploaded)
         }

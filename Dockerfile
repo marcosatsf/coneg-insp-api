@@ -6,5 +6,6 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 RUN rm requirements.txt
 RUN mkdir tmp
-COPY insp_coneg.py db_transactions.py ./
+COPY /sql ./sql/
+COPY insp_coneg.py db_transactions.py request_manager.py ./
 CMD ["python", "insp_coneg.py"]
