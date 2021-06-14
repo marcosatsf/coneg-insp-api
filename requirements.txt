@@ -1,6 +1,5 @@
-fastapi[all]
-fastapi-login
-psycopg2-binary
-pandas
 dlib
+pandas
+psycopg2-binary
+fastapi[all]
 face_recognition
