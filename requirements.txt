@@ -3,3 +3,5 @@ pandas
 psycopg2-binary
 fastapi[all]
 face_recognition
+yagmail[all]
+python-dotenv

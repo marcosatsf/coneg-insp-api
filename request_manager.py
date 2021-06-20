@@ -1,10 +1,14 @@
 from concurrent.futures import ThreadPoolExecutor
+from typing import Dict
 from db_transactions import PsqlPy
+from dotenv import load_dotenv
 import face_recognition
 import numpy as np
 from glob import glob
+import time
 import os
-
+import yagmail
+import yaml
 
 def multiprocess_recognition(
         location: str, 
@@ -29,12 +33,23 @@ def multiprocess_recognition(
         pesid = future.result()
         if pesid:
             # Status 2 -> not mask & registered
+            data_notific = load_notification_config()
+            if data_notific:
+                person = db.select_query(pesid)
+                if person:
+                    notify(data_notific, person)
+                    db.update_query(True, pesid)
+                else:
+                    print(f'Person [{person}] already notified!')
+
+            # Status 2 -> not mask & registered
             db.insert_row(
                 local=location,
                 ts=ts,
                 status=2,
                 pessoa=pesid
             )
+            
         else:
             # Status 1 -> not mask & not registered
             db.insert_row(
@@ -93,6 +108,50 @@ def which_face(image_jpg : str) -> str:
         file_name = ''
 
     return file_name
+
+
+def load_notification_config(retries : int = 3) -> Dict[str, str]:
+    """
+    Reads configuration done by admin. Retries N times until
+    fails to load and proceed without notify. Default to `retries`
+    is 3.
+
+    Returns:
+        dict: method and message configured by admin.
+    """
+    for e in range(retries):
+        try:
+            with open(f'./shr-data/config_notificacao.yaml', 'r') as f:
+                data = yaml.load(f)
+            return data
+        except FileNotFoundError as e:
+            print('Configuration not yet created!')
+            time.sleep(2)
+    return None
+
+
+def notify(config : Dict[str, str], data : Dict[str, str]):
+    if config['method'] == 'Email':
+        load_dotenv()
+
+        GMAIL_USER=os.getenv('GMAIL_USER')
+        GMAIL_PW=os.getenv('GMAIL_PW')
+
+        mailer = yagmail.SMTP(GMAIL_USER, GMAIL_PW)
+
+        # Formatting message
+        config['message'] = config['message'].replace('$NOME',data['nome'])
+
+        mailer.send(
+            to=data['email'],
+            subject='Aviso do sistema ConEg',
+            contents=[yagmail.inline("./assets/coneg_icon.png"),'\n\n',config['message']]
+            #yagmail.inline()
+        )
+    elif config['method'] == 'Telefone':
+        pass
+    else:
+        print('This was an unnexpected behavior... 😵🥴')
 
 
 def ins_clean_request(location : str, ts : str):

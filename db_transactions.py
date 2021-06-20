@@ -49,6 +49,40 @@ class PsqlPy:
                 print("Cannot insert on insert_no_person!")
                 raise Exception
 
+    
+    def select_query(self, id_person: str):
+        with open('sql/select_person.sql','r') as f:
+            query = f.read()
+        
+        try:
+            data = (id_person, )
+            self.cur.execute(query, data)
+            res = self.cur.fetchall()[0]
+            return {
+                'pesid':res[0],
+                'nome':res[1],
+                'email':res[2],
+                'telefone':res[3],
+                'notif':res[4]
+            }
+        except IndexError:
+            return {}
+        except Exception:
+            print("Cannot select!")
+            raise Exception
+
+
+    def update_query(self, set_value: bool, id_person: str):
+        with open('sql/update_status.sql','r') as f:
+            query = f.read()
+        
+        try:
+            data = (set_value, id_person, )
+            self.cur.execute(query, data)
+        except Exception:
+            print("Cannot update!")
+            raise Exception
+
 
     def disconnect(self):
         """
