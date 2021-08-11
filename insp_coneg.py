@@ -60,7 +60,10 @@ async def found_face_withorwithout(
     dt = str(datetime.fromtimestamp(ts))
     # Receive request and save frame
     if file_uploaded:
-        file_name = f"./tmp/{int(time())}.jpg"
+        if not os.path.exists('shr-data/registry/'):
+            os.mkdir('shr-data/registry/')
+        
+        file_name = f"./shr-data/registry/{int(time())}.jpg"
         with open(file_name, 'wb') as buffer:
             shutil.copyfileobj(file_uploaded.file, buffer)
         # Spawns thread to analyze this image

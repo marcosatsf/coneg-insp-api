@@ -13,7 +13,7 @@ import yaml
 def multiprocess_recognition(
         location: str, 
         ts : str, 
-        image_jpg : str
+        f_image_jpg : str
     ):
     """
     Tries to recognize a face and then register a new line
@@ -22,11 +22,11 @@ def multiprocess_recognition(
     Args:
         location (str): Location configured on Inspector.
         ts (str): Timestamp using date and time (no time zone).
-        image_jpg (str): Filename including relative path to the
+        f_image_jpg (str): Filename including relative path to the
         image which we received on api request.
     """
     with ThreadPoolExecutor(max_workers=2) as executor:
-        future = executor.submit(which_face, image_jpg)
+        future = executor.submit(which_face, f_image_jpg)
 
         db = PsqlPy()
         # Returns the pesid from coneg.cadastros
@@ -49,7 +49,8 @@ def multiprocess_recognition(
                 status=2,
                 pessoa=pesid
             )
-            
+            # file_name = f"./shr-data/registry/{int(time())}.jpg"
+            os.rename(f_image_jpg, f'./shr-data/registry/{pesid}_{ts}.jpg')
         else:
             # Status 1 -> not mask & not registered
             db.insert_row(
@@ -57,9 +58,10 @@ def multiprocess_recognition(
                 ts=ts,
                 status=1
             )           
+            # Remove temporary file received from inspector
+            os.remove(f_image_jpg)
+        
         db.disconnect()
-        # Remove temporary file received from inspector
-        os.remove(image_jpg)
 
 
 def which_face(image_jpg : str) -> str:
