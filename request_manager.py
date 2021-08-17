@@ -2,6 +2,7 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import Dict
 from db_transactions import PsqlPy
 from dotenv import load_dotenv
+from datetime import datetime
 import face_recognition
 import numpy as np
 from glob import glob
@@ -12,7 +13,7 @@ import yaml
 
 def multiprocess_recognition(
         location: str, 
-        ts : str, 
+        ts : int, 
         f_image_jpg : str
     ):
     """
@@ -21,7 +22,7 @@ def multiprocess_recognition(
 
     Args:
         location (str): Location configured on Inspector.
-        ts (str): Timestamp using date and time (no time zone).
+        ts (int): Timestamp using date and time (no time zone).
         f_image_jpg (str): Filename including relative path to the
         image which we received on api request.
     """
@@ -39,28 +40,29 @@ def multiprocess_recognition(
                 if person:
                     notify(data_notific, person)
                     db.update_query(True, pesid)
+                    # file_name = f"./shr-data/registry/{int(time())}.jpg"
+                    os.rename(f_image_jpg, f'./shr-data/registry/1_{pesid}_{ts}.jpg')
                 else:
                     print(f'Person [{person}] already notified!')
-
+                    # file_name = f"./shr-data/registry/{int(time())}.jpg"
+                    os.rename(f_image_jpg, f'./shr-data/registry/0_{pesid}_{ts}.jpg')
             # Status 2 -> not mask & registered
             db.insert_row(
                 local=location,
-                ts=ts,
+                ts=str(datetime.fromtimestamp(ts)),
                 status=2,
                 pessoa=pesid
             )
-            # file_name = f"./shr-data/registry/{int(time())}.jpg"
-            os.rename(f_image_jpg, f'./shr-data/registry/{pesid}_{ts}.jpg')
         else:
             # Status 1 -> not mask & not registered
             db.insert_row(
                 local=location,
-                ts=ts,
+                ts=str(datetime.fromtimestamp(ts)),
                 status=1
-            )           
+            )
             # Remove temporary file received from inspector
             os.remove(f_image_jpg)
-        
+
         db.disconnect()
 
 

@@ -56,23 +56,21 @@ async def found_face_withorwithout(
         (dict): Response with timestamp, location and is frame
         was sent by the inspector side.
     """
-    # Transform to timestamp acceptable to Postgres
-    dt = str(datetime.fromtimestamp(ts))
     # Receive request and save frame
     if file_uploaded:
         if not os.path.exists('shr-data/registry/'):
             os.mkdir('shr-data/registry/')
-        
+
         file_name = f"./shr-data/registry/{int(time())}.jpg"
         with open(file_name, 'wb') as buffer:
             shutil.copyfileobj(file_uploaded.file, buffer)
         # Spawns thread to analyze this image
-        req_m.multiprocess_recognition(location, dt, file_name)
+        req_m.multiprocess_recognition(location, ts, file_name)
     else:
-        req_m.ins_clean_request(location, dt)
+        req_m.ins_clean_request(location, str(datetime.fromtimestamp(ts)))
 
     return {
-        'ts':dt,
+        'ts':str(datetime.fromtimestamp(ts)),
         'loc':location,
         'file_sent': bool(file_uploaded)
         }
